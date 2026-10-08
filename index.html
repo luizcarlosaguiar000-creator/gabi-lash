@@ -992,7 +992,7 @@ document.getElementById('reportsModal').addEventListener('click',e=>{if(e.target
 </script>
 
 <style>
-#supabaseLogin{display:none;position:fixed;inset:0;z-index:999999;background:radial-gradient(circle at 50% 15%,#241c10 0,#080808 48%);align-items:center;justify-content:center;padding:20px}
+#supabaseLogin{display:flex;position:fixed;inset:0;z-index:999999;background:radial-gradient(circle at 50% 15%,#241c10 0,#080808 48%);align-items:center;justify-content:center;padding:20px}
 #supabaseLogin .login-card{width:min(420px,100%);background:#11110f;border:1px solid #4a3920;border-radius:20px;padding:28px;box-shadow:0 25px 90px #000;text-align:center}
 #supabaseLogin h2{font-family:Georgia,serif;color:#f0d28b;margin:0 0 6px;font-size:28px}
 #supabaseLogin p{color:#aaa;font-size:13px;margin:0 0 22px}
@@ -1048,6 +1048,14 @@ async function gabiInitAuth(){
     const {error}=await window.gabiSupabase.auth.signInWithPassword({email,password});
     status.textContent=error ? ('Erro: '+error.message) : '';
   };
+}
+
+
+// Inicializa a autenticação assim que o Supabase estiver disponível.
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => { gabiInitAuth(); });
+} else {
+  gabiInitAuth();
 }
 
 async function gabiLoadServicesFromSupabase(){
