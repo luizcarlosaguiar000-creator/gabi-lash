@@ -511,8 +511,10 @@ function nextStep(){
     document.getElementById('confirmationText').innerHTML=
       'Gabi: Perfeito! 💕 Te espero dia <b>'+booking.date+'</b> às <b>'+booking.time+'</b>!<br><br>'+
       'Cliente: '+name+'<br>WhatsApp: '+phone;
-    if(typeof registerCompletedBooking==='function'){registerCompletedBooking({name:booking.name,phone:booking.phone,service:booking.service,date:booking.date,time:booking.time,price:booking.price});}
-showStep(5);return;
+    booking.name=name; booking.phone=phone;
+    if(typeof registerCompletedBooking==='function'){registerCompletedBooking({name,phone,service:booking.service,date:booking.date,time:booking.time,price:booking.price});}
+    if(typeof gabiSaveAppointmentToSupabase==='function'){gabiSaveAppointmentToSupabase({name,phone,serviceName:booking.service,date:booking.date,time:booking.time}).then(r=>{if(!r.ok) console.warn('Supabase:',r.message);});}
+    showStep(5);return;
   }
   showStep(current+1);
 }
@@ -989,16 +991,27 @@ document.getElementById('reportsModal').addEventListener('click',e=>{if(e.target
 })();
 </script>
 
+<style>
+#supabaseLogin{display:none;position:fixed;inset:0;z-index:999999;background:radial-gradient(circle at 50% 15%,#241c10 0,#080808 48%);align-items:center;justify-content:center;padding:20px}
+#supabaseLogin .login-card{width:min(420px,100%);background:#11110f;border:1px solid #4a3920;border-radius:20px;padding:28px;box-shadow:0 25px 90px #000;text-align:center}
+#supabaseLogin h2{font-family:Georgia,serif;color:#f0d28b;margin:0 0 6px;font-size:28px}
+#supabaseLogin p{color:#aaa;font-size:13px;margin:0 0 22px}
+#supabaseLogin input{width:100%;padding:13px;margin:7px 0;background:#0c0c0b;border:1px solid #2a261e;border-radius:9px;color:#fff;outline:none}
+#supabaseLogin button{width:100%;padding:13px;margin-top:10px;background:#d8ad58;border:0;border-radius:22px;color:#17120a;font-weight:bold;cursor:pointer}
+#loginStatus{min-height:18px;color:#d88a8a;font-size:12px;margin-top:10px}
+</style>
+<div id="supabaseLogin"><div class="login-card"><div style="font-size:40px;color:#d8ad58">◉</div><h2>GABI LASH</h2><p>Acesso ao painel de controle</p><input id="loginEmail" type="email" placeholder="E-mail"><input id="loginPassword" type="password" placeholder="Senha"><button id="loginBtn">ENTRAR</button><div id="loginStatus"></div></div></div>
 <!-- GABI LASH • Supabase Integration -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 window.GABI_SUPABASE_CONFIG = {
-  url: "COLE_AQUI_SUA_NEXT_PUBLIC_SUPABASE_URL",
-  key: "COLE_AQUI_SUA_NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
+  url: "https://mpvnmckpsjayjnacepdt.supabase.co",
+  key: "sb_publishable_j_xFXqd4SqZcr3uVXkytRQ_g9sqC5ll"
 };
 
 window.gabiSupabase = null;
 window.gabiSupabaseConnected = false;
+window.gabiAuthReady = false;
 
 (function(){
   const c = window.GABI_SUPABASE_CONFIG;
@@ -1009,12 +1022,40 @@ window.gabiSupabaseConnected = false;
   }
 })();
 
+async function gabiInitAuth(){
+  if(!window.gabiSupabaseConnected) return;
+  const login=document.getElementById('supabaseLogin');
+  const status=document.getElementById('loginStatus');
+  const btn=document.getElementById('loginBtn');
+  async function applySession(session){
+    if(session?.user){
+      window.gabiAuthReady=true;
+      if(login) login.style.display='none';
+      await gabiLoadServicesFromSupabase();
+      return;
+    }
+    window.gabiAuthReady=false;
+    if(login) login.style.display='flex';
+  }
+  const {data}=await window.gabiSupabase.auth.getSession();
+  await applySession(data.session);
+  window.gabiSupabase.auth.onAuthStateChange((_event,session)=>{ applySession(session); });
+  if(btn) btn.onclick=async()=>{
+    status.textContent='Entrando...';
+    const email=document.getElementById('loginEmail').value.trim();
+    const password=document.getElementById('loginPassword').value;
+    if(!email||!password){status.textContent='Informe e-mail e senha.';return;}
+    const {error}=await window.gabiSupabase.auth.signInWithPassword({email,password});
+    status.textContent=error ? ('Erro: '+error.message) : '';
+  };
+}
+
 async function gabiLoadServicesFromSupabase(){
   if (!window.gabiSupabaseConnected) return null;
-  const {data: salons, error: se} = await window.gabiSupabase
-    .from("salons").select("id,name").eq("name","GABI LASH").limit(1);
-  if (se || !salons?.length) return null;
-  window.GABI_SALON_ID = salons[0].id;
+  const {data: member, error: me} = await window.gabiSupabase
+    .from("salon_members").select("salon_id, salons(id,name)").eq("user_id", (await window.gabiSupabase.auth.getUser()).data.user?.id).limit(1).maybeSingle();
+  if (me || !member?.salon_id) return null;
+  window.GABI_SALON_ID = member.salon_id;
 
   const {data, error} = await window.gabiSupabase
     .from("services").select("id,name,price,duration_minutes,active")
