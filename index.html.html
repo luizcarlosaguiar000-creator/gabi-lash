@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GABI LASH — Protótipo</title>
+<style>
+:root{
+  --bg:#080808; --panel:#11110f; --panel2:#171613; --gold:#d8ad58;
+  --gold2:#f0d28b; --text:#f4f1ea; --muted:#a7a39b; --line:#2a261e;
+  --green:#67c587;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}
+.app{display:flex;min-height:100vh}
+.sidebar{width:240px;background:#0b0b0a;border-right:1px solid var(--line);padding:26px 16px;position:fixed;top:0;bottom:0}
+.logo{text-align:center;margin-bottom:30px}
+.logo .eye{font-size:34px;color:var(--gold)}
+.logo h1{font-family:Georgia,serif;letter-spacing:2px;margin:5px 0;font-size:25px}
+.logo p{font-size:10px;color:var(--muted);margin:0}
+.nav button{width:100%;padding:13px 14px;margin:4px 0;background:transparent;border:0;border-radius:10px;color:#d8d5cf;text-align:left;cursor:pointer;font-size:14px}
+.nav button.active,.nav button:hover{background:linear-gradient(90deg,#2c2415,#17130d);color:var(--gold2)}
+.main{margin-left:240px;width:calc(100% - 240px);padding:28px;max-width:1500px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}
+.search{background:var(--panel);border:1px solid var(--line);border-radius:25px;padding:13px 18px;color:var(--muted);width:380px}
+.profile{display:flex;gap:12px;align-items:center}.avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#5b4524,#17110a);display:grid;place-items:center;color:var(--gold2)}
+h2{font-size:29px;margin:0 0 5px}.sub{color:var(--muted);margin:0 0 22px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.card,.section{background:linear-gradient(145deg,#151411,#0f0f0d);border:1px solid var(--line);border-radius:14px}
+.card{padding:18px}.label{font-size:12px;color:var(--muted)}.value{font-size:25px;font-weight:bold;margin-top:10px}.up{font-size:11px;color:var(--green);margin-top:7px}
+.grid{display:grid;grid-template-columns:1.45fr 1fr;gap:16px;margin-top:16px}
+.section{padding:18px}.section h3{margin:0 0 15px;font-size:16px}
+.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.action{padding:17px 8px;border:1px solid var(--line);background:#14130f;border-radius:11px;color:var(--text);cursor:pointer;text-align:center}
+.action:hover{border-color:#755a2b}.icon{font-size:22px;color:var(--gold2);margin-bottom:8px}.action span{display:block;font-size:12px}
+.appointments .row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);font-size:13px}
+.status{font-size:10px;padding:5px 8px;border-radius:10px;background:#29251a;color:var(--gold2)}
+.gabi{display:flex;gap:18px;align-items:center}.gabiimg{width:100px;height:130px;border-radius:50px 50px 18px 18px;background:linear-gradient(145deg,#6b4e28,#17100a);display:grid;place-items:center;font-size:45px}
+.gabi p{color:var(--muted);line-height:1.5;font-size:13px}.btn{background:var(--gold);color:#17120a;border:0;padding:11px 17px;border-radius:22px;font-weight:bold;cursor:pointer}
+.services{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.service{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#12110f}.service .pic{height:85px;background:radial-gradient(circle at 50% 35%,#b98b4b,#22170c 58%,#0c0b0a)}.service div:last-child{padding:10px;font-size:11px}.price{color:var(--gold2);font-weight:bold;margin-top:5px}
+.mobile-nav{display:none}
+@media(max-width:900px){
+ .sidebar{display:none}.main{margin:0;width:100%;padding:18px 15px 80px}.top{margin-bottom:20px}.search{width:55%;font-size:12px}
+ .cards{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.actions{grid-template-columns:repeat(2,1fr)}
+ .services{grid-template-columns:repeat(2,1fr)}.mobile-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#0d0d0c;border-top:1px solid var(--line);justify-content:space-around;padding:10px;z-index:5}
+ .mobile-nav button{background:none;border:0;color:var(--muted);font-size:11px}.mobile-nav button:first-child{color:var(--gold2)}
+}
+
+/* Modal de agendamento */
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:20;align-items:center;justify-content:center;padding:18px}
+.modal{width:min(680px,100%);max-height:92vh;overflow:auto;background:#11110f;border:1px solid #4a3920;border-radius:18px;box-shadow:0 25px 80px #000;padding:24px}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.modal-head h3{margin:0;font-size:22px}.close{background:none;border:0;color:#aaa;font-size:25px;cursor:pointer}
+.steps{display:flex;gap:7px;margin-bottom:22px}.step{flex:1;text-align:center;padding:8px;border-radius:8px;background:#1a1915;color:#777;font-size:11px}.step.active{background:#2b2112;color:var(--gold2)}
+.form-section{display:none}.form-section.active{display:block}.form-section h4{margin:0 0 14px}
+.options{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.option{padding:14px;background:#151411;border:1px solid var(--line);border-radius:11px;color:#eee;text-align:left;cursor:pointer}.option:hover,.option.selected{border-color:var(--gold);background:#241c10}.option b{display:block;margin-bottom:5px}.option small{color:var(--muted)}
+.dates{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}.date{padding:10px 3px;border:1px solid var(--line);background:#151411;color:#ddd;border-radius:8px;text-align:center;cursor:pointer;font-size:11px}.date:hover,.date.selected{border-color:var(--gold);color:var(--gold2);background:#241c10}
+.times{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.time{padding:11px;border:1px solid var(--line);background:#151411;color:#ddd;border-radius:8px;cursor:pointer}.time:hover,.time.selected{border-color:var(--gold);background:#241c10;color:var(--gold2)}
+.field{width:100%;padding:13px;margin:7px 0;background:#0c0c0b;border:1px solid var(--line);border-radius:9px;color:#fff;outline:none}.field:focus{border-color:var(--gold)}
+.summary{padding:15px;border:1px solid var(--line);border-radius:10px;background:#0d0d0c;margin-bottom:15px;line-height:1.7;color:#ddd}.modal-actions{display:flex;justify-content:space-between;margin-top:18px}.secondary{background:#1a1915;color:#ddd;border:1px solid var(--line);padding:11px 17px;border-radius:22px;cursor:pointer}.success{text-align:center;padding:25px 5px}.success .check{font-size:50px;color:var(--gold2)}
+@media(max-width:600px){.modal{padding:18px}.options{grid-template-columns:1fr}.dates{grid-template-columns:repeat(4,1fr)}.times{grid-template-columns:repeat(3,1fr)}}
+
+/* Chat da Gabi */
+.chat-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:30;align-items:center;justify-content:center;padding:18px}
+.chat-modal{width:min(560px,100%);height:min(760px,92vh);background:#0e0e0d;border:1px solid #4a3920;border-radius:18px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 25px 80px #000}
+.chat-head{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+.gabi-avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#70512a,#17100a);display:grid;place-items:center;font-size:23px}
+.chat-head h3{margin:0;font-size:15px}.online{color:#67c587;font-size:11px;margin-top:3px}
+.chat-close{margin-left:auto;background:none;border:0;color:#aaa;font-size:25px;cursor:pointer}
+.chat-messages{flex:1;overflow:auto;padding:18px;background:radial-gradient(circle at 80% 10%,#19150e 0,#0e0e0d 35%)}
+.msg{max-width:82%;padding:11px 13px;border-radius:14px;margin:7px 0;font-size:13px;line-height:1.45}
+.msg.gabi{background:#1b1812;border:1px solid #30271a;border-bottom-left-radius:4px}
+.msg.user{background:#8e6c34;color:#fff;margin-left:auto;border-bottom-right-radius:4px}
+.quick{display:flex;gap:7px;flex-wrap:wrap;padding:0 18px 10px}
+.quick button{background:#171511;border:1px solid #44351e;color:var(--gold2);border-radius:18px;padding:8px 11px;font-size:11px;cursor:pointer}
+.chat-input{display:flex;gap:8px;padding:13px;border-top:1px solid var(--line);background:#10100f}
+.chat-input input{flex:1;background:#181714;border:1px solid var(--line);border-radius:22px;padding:12px 15px;color:#fff;outline:none}
+.chat-input input:focus{border-color:var(--gold)}
+.send{width:44px;height:44px;border-radius:50%;border:0;background:var(--gold);color:#17120a;font-weight:bold;cursor:pointer}
+.chat-typing{font-size:10px;color:#888;margin:4px 0 8px}
+@media(max-width:600px){.chat-backdrop{padding:0}.chat-modal{height:100vh;border-radius:0;width:100%}}
+
+/* Área de clientes */
+.clients-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:25;align-items:center;justify-content:center;padding:18px}
+.clients-modal{width:min(900px,100%);max-height:92vh;overflow:auto;background:#11110f;border:1px solid #4a3920;border-radius:18px;padding:24px;box-shadow:0 25px 80px #000}
+.clients-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}.clients-head h3{margin:0;font-size:22px}
+.clients-tools{display:flex;gap:10px;margin-bottom:16px}.clients-search{flex:1;background:#0c0c0b;border:1px solid var(--line);border-radius:22px;padding:12px 15px;color:#fff;outline:none}
+.client-add{white-space:nowrap}
+.client-list{display:grid;gap:9px}.client-card{display:grid;grid-template-columns:1.5fr 1fr .8fr .8fr auto;align-items:center;gap:10px;padding:14px;background:#151411;border:1px solid var(--line);border-radius:11px}
+.client-card:hover{border-color:#755a2b}.client-name b{display:block}.client-name small,.client-meta{color:var(--muted);font-size:11px}.client-money{color:var(--gold2);font-weight:bold;font-size:12px}.stars{font-size:12px;color:var(--gold2)}
+.client-view{background:#1a1915;border:1px solid var(--line);color:var(--gold2);border-radius:17px;padding:8px 12px;cursor:pointer;font-size:11px}
+.client-empty{text-align:center;color:var(--muted);padding:30px}
+.client-detail{display:none}.detail-back{background:none;border:0;color:var(--gold2);cursor:pointer;padding:0;margin-bottom:15px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.detail-box{background:#151411;border:1px solid var(--line);border-radius:11px;padding:15px}.detail-box h4{margin:0 0 10px}.history-row{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:10px 0;font-size:12px}
+.add-client-form{display:none}.add-client-form .field{margin:5px 0}
+@media(max-width:700px){
+ .clients-backdrop{padding:0}.clients-modal{height:100vh;max-height:none;border-radius:0;padding:18px}
+ .client-card{grid-template-columns:1fr auto}.client-card .client-phone,.client-card .client-money,.client-card .client-rating{display:none}
+ .clients-tools{flex-wrap:wrap}.client-search{width:100%}.detail-grid{grid-template-columns:1fr}
+}
+
+/* Campanhas */
+.campaign-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:26;align-items:center;justify-content:center;padding:18px}
+.campaign-modal{width:min(850px,100%);max-height:92vh;overflow:auto;background:#11110f;border:1px solid #4a3920;border-radius:18px;padding:24px;box-shadow:0 25px 80px #000}
+.campaign-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.campaign-head h3{margin:0;font-size:22px}
+.campaign-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.campaign-box{background:#151411;border:1px solid var(--line);border-radius:12px;padding:15px}
+.campaign-box h4{margin:0 0 10px}.campaign-select,.campaign-textarea{width:100%;box-sizing:border-box;background:#0c0c0b;color:#fff;border:1px solid var(--line);border-radius:9px;padding:11px;outline:none}
+.campaign-textarea{min-height:145px;resize:vertical;line-height:1.5}.campaign-preview{margin-top:14px;background:#0c0c0b;border:1px solid #3b2e1b;border-radius:12px;padding:16px;white-space:pre-wrap;line-height:1.55}
+.campaign-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:15px}.campaign-status{margin-top:12px;color:var(--gold2);font-size:12px}
+.campaign-list{margin-top:18px;display:grid;gap:9px}.campaign-item{padding:13px;background:#151411;border:1px solid var(--line);border-radius:10px;display:flex;justify-content:space-between;gap:12px;align-items:center}.campaign-item small{color:var(--muted)}
+@media(max-width:700px){.campaign-backdrop{padding:0}.campaign-modal{height:100vh;max-height:none;border-radius:0;padding:18px}.campaign-grid{grid-template-columns:1fr}.campaign-actions{justify-content:stretch}.campaign-actions button{flex:1}}
+
+/* Avaliações */
+.reviews-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:27;align-items:center;justify-content:center;padding:18px}
+.reviews-modal{width:min(900px,100%);max-height:92vh;overflow:auto;background:#11110f;border:1px solid #4a3920;border-radius:18px;padding:24px;box-shadow:0 25px 80px #000}
+.reviews-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}.reviews-head h3{margin:0;font-size:22px}
+.review-summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px}.review-stat{background:#151411;border:1px solid var(--line);border-radius:12px;padding:16px}.review-stat small{color:var(--muted);display:block;margin-bottom:7px}.review-big{font-size:25px;font-weight:bold;color:var(--gold2)}.review-stars{color:var(--gold2);letter-spacing:2px}
+.review-list{display:grid;gap:10px}.review-card{background:#151411;border:1px solid var(--line);border-radius:12px;padding:15px}.review-card-top{display:flex;justify-content:space-between;gap:10px}.review-card small{color:var(--muted)}.review-comment{margin:10px 0 8px;line-height:1.5}.published{font-size:10px;color:var(--gold2)}
+.review-form{display:none}.review-form input,.review-form textarea{width:100%;box-sizing:border-box;background:#0c0c0b;border:1px solid var(--line);border-radius:9px;color:#fff;padding:11px;margin:6px 0;outline:none}.review-form textarea{min-height:100px;resize:vertical}.rating-buttons{display:flex;gap:5px;margin:7px 0 12px}.rating-buttons button{background:#151411;border:1px solid var(--line);color:#777;border-radius:8px;padding:8px 12px;cursor:pointer}.rating-buttons button.active{color:var(--gold2);border-color:#8a6a30}
+@media(max-width:700px){.reviews-backdrop{padding:0}.reviews-modal{height:100vh;max-height:none;border-radius:0;padding:18px}.review-summary{grid-template-columns:1fr}.review-card-top{flex-direction:column}}
+
+/* Financeiro */
+.finance-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:28;align-items:center;justify-content:center;padding:18px}
+.finance-modal{width:min(980px,100%);max-height:92vh;overflow:auto;background:#11110f;border:1px solid #4a3920;border-radius:18px;padding:24px;box-shadow:0 25px 80px #000}
+.finance-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}.finance-head h3{margin:0;font-size:22px}
+.finance-filter{display:flex;gap:8px;align-items:center;margin-bottom:15px}.finance-filter select{background:#0c0c0b;color:#fff;border:1px solid var(--line);border-radius:9px;padding:10px;outline:none}
+.finance-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:15px}.finance-card{background:#151411;border:1px solid var(--line);border-radius:12px;padding:15px}.finance-card small{display:block;color:var(--muted);margin-bottom:7px}.finance-value{font-size:22px;font-weight:bold;color:var(--gold2)}.finance-change{font-size:10px;color:#9a9a91;margin-top:5px}
+.finance-section{background:#151411;border:1px solid var(--line);border-radius:12px;padding:15px;margin-top:12px}.finance-section h4{margin:0 0 12px}
+.finance-table{width:100%;border-collapse:collapse;font-size:12px}.finance-table th{text-align:left;color:var(--muted);font-weight:normal;padding:8px;border-bottom:1px solid var(--line)}.finance-table td{padding:10px 8px;border-bottom:1px solid var(--line)}.finance-table tr:last-child td{border-bottom:0}.finance-total{text-align:right;color:var(--gold2);font-weight:bold;margin-top:12px}
+.finance-bar{height:8px;background:#292720;border-radius:8px;overflow:hidden;margin-top:8px}.finance-bar span{display:block;height:100%;background:var(--gold2);border-radius:8px}
+@media(max-width:700px){.finance-backdrop{padding:0}.finance-modal{height:100vh;max-height:none;border-radius:0;padding:18px}.finance-cards{grid-template-columns:1fr 1fr}.finance-table{font-size:11px}.finance-table th:nth-child(3),.finance-table td:nth-child(3){display:none}}
+
+/* Sistema completo */
+.full-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:29;align-items:center;justify-content:center;padding:18px}
+.full-modal{width:min(960px,100%);max-height:92vh;overflow:auto;background:#11110f;border:1px solid #4a3920;border-radius:18px;padding:24px;box-shadow:0 25px 80px #000}
+.full-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}.full-head h3{margin:0;font-size:22px}
+.full-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.full-box{background:#151411;border:1px solid var(--line);border-radius:12px;padding:15px}.full-box h4{margin:0 0 11px}
+.full-input,.full-select,.full-textarea{width:100%;box-sizing:border-box;background:#0c0c0b;color:#fff;border:1px solid var(--line);border-radius:9px;padding:10px;outline:none;margin:4px 0 8px}.full-textarea{min-height:100px;resize:vertical}
+.full-row{display:flex;gap:8px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding:10px 0;font-size:12px}.full-row:last-child{border-bottom:0}
+.full-muted{color:var(--muted);font-size:11px}.gold{color:var(--gold2)}.full-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.reminder-card{background:#151411;border:1px solid var(--line);border-radius:10px;padding:12px;margin:8px 0}.reminder-card b{color:var(--gold2)}
+.service-admin{display:grid;grid-template-columns:1.2fr .6fr .5fr auto;gap:7px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:12px}
+.toggle-line{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:12px}
+@media(max-width:700px){.full-backdrop{padding:0}.full-modal{height:100vh;max-height:none;border-radius:0;padding:18px}.full-grid{grid-template-columns:1fr}.service-admin{grid-template-columns:1fr auto}.service-admin .svc-meta{display:none}}
+
+/* Relatórios */
+.reports-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:30;align-items:center;justify-content:center;padding:18px}
+.reports-modal{width:min(950px,100%);max-height:92vh;overflow:auto;background:#11110f;border:1px solid #4a3920;border-radius:18px;padding:24px;box-shadow:0 25px 80px #000}
+.reports-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}.reports-head h3{margin:0;font-size:22px}
+.report-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.report-card{background:#151411;border:1px solid var(--line);border-radius:12px;padding:15px}.report-card small{display:block;color:var(--muted);margin-bottom:7px}.report-value{font-size:21px;font-weight:bold;color:var(--gold2)}
+.report-section{background:#151411;border:1px solid var(--line);border-radius:12px;padding:15px;margin-top:12px}.report-section h4{margin:0 0 12px}
+.report-row{display:flex;align-items:center;gap:10px;margin:11px 0;font-size:12px}.report-row>span:first-child{width:145px}.report-track{height:8px;flex:1;background:#292720;border-radius:8px;overflow:hidden}.report-track span{display:block;height:100%;background:var(--gold2)}
+.report-table{width:100%;border-collapse:collapse;font-size:12px}.report-table th,.report-table td{text-align:left;padding:9px;border-bottom:1px solid var(--line)}.report-table th{color:var(--muted);font-weight:normal}
+@media(max-width:700px){.reports-backdrop{padding:0}.reports-modal{height:100vh;max-height:none;border-radius:0;padding:18px}.report-cards{grid-template-columns:1fr 1fr}.report-row>span:first-child{width:105px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="logo"><div class="eye">◉⌁</div><h1>GABI LASH</h1><p>Sua assistente inteligente para extensão de cílios.</p></div>
+  <nav class="nav">
+    <button class="active">⌂ &nbsp; Dashboard</button><button>▣ &nbsp; Agendamentos</button><button onclick="openClients()">♟ &nbsp; Clientes</button><button>▢ &nbsp; Conversas da Gabi</button><button>⚑ &nbsp; Campanhas</button><button>＄ &nbsp; Financeiro</button><button>▥ &nbsp; Relatórios</button><button>⚙ &nbsp; Configurações</button>
+  </nav>
+</aside>
+<main class="main">
+  <div class="top"><div class="search">⌕ &nbsp; Buscar cliente, agendamento...</div><div class="profile"><div>🔔</div><div class="avatar">G</div><div><b>Gabi Lash</b><br><small style="color:var(--muted)">Proprietária</small></div></div></div>
+  <h2>Olá, seja bem-vinda!</h2><p class="sub">Aqui está o resumo do seu dia.</p>
+  <section class="cards">
+    <div class="card"><div class="label">Faturamento hoje</div><div class="value">R$ 450,00</div><div class="up">↑ 12% vs. ontem</div></div>
+    <div class="card"><div class="label">Agendamentos hoje</div><div class="value">4</div><div class="up">↑ 33% vs. ontem</div></div>
+    <div class="card"><div class="label">Faturamento do mês</div><div class="value">R$ 6.850</div><div class="up">↑ 18% vs. mês anterior</div></div>
+    <div class="card"><div class="label">Próximo atendimento</div><div class="value">15:30</div><div class="up">Maria · Volume brasileiro</div></div>
+  </section>
+
+  <div class="grid">
+    <div>
+      <section class="section">
+        <h3>Atalhos rápidos</h3>
+        <div class="actions">
+          <button class="action" onclick="openBooking()"><div class="icon">＋</div><span>Novo agendamento</span></button>
+          <button class="action" onclick="openClients()"><div class="icon">♟</div><span>Clientes</span></button>
+          <button class="action" onclick="openGabi()"><div class="icon">◉</div><span>Gabi</span></button>
+          <button class="action" onclick="alert('Criar campanha')"><div class="icon">⚑</div><span>Campanhas</span></button>
+        </div>
+      </section>
+      <section class="section" style="margin-top:16px">
+        <h3>Gabi — sua assistente virtual</h3>
+        <div class="gabi"><div class="gabiimg">👩🏻</div><div><b>Online 24h</b><p>Atende clientes, consulta preços e agenda horários automaticamente.</p><button class="btn" onclick="openGabi()">Conversar com a Gabi →</button></div></div>
+      </section>
+      <section class="section" style="margin-top:16px">
+        <h3>Serviços e valores</h3>
+        <div class="services">
+          <div class="service"><div class="pic"></div><div>Fio a fio<div class="price">R$ 150 · 3h</div></div></div>
+          <div class="service"><div class="pic"></div><div>Volume brasileiro<div class="price">R$ 180 · 3h</div></div></div>
+          <div class="service"><div class="pic"></div><div>Volume russo<div class="price">R$ 220 · 3h</div></div></div>
+          <div class="service"><div class="pic"></div><div>Mega volume<div class="price">R$ 250 · 3h</div></div></div>
+          <div class="service"><div class="pic"></div><div>Manutenção<div class="price">R$ 100 · 1h30</div></div></div>
+        </div>
+      </section>
+    </div>
+    <section class="section appointments"><h3>Agenda de hoje</h3>
+      <div class="row"><span>09:00 · Ana Souza<br><small style="color:var(--muted)">Fio a fio</small></span><span class="status">✓</span></div>
+      <div class="row"><span>11:30 · Juliana Lima<br><small style="color:var(--muted)">Volume brasileiro</small></span><span class="status">✓</span></div>
+      <div class="row"><span>14:00 · Camila Rocha<br><small style="color:var(--muted)">Manutenção</small></span><span class="status">✓</span></div>
+      <div class="row"><span><b>15:30 · Maria Oliveira</b><br><small style="color:var(--muted)">Volume brasileiro</small></span><span class="status">Em andamento</span></div>
+      <div class="row"><span>17:00 · Fernanda Costa<br><small style="color:var(--muted)">Volume russo</small></span><span class="status">○</span></div>
+      <h3 style="margin-top:24px">Clientes recentes</h3>
+      <div class="row"><span>Maria Oliveira</span><span>›</span></div><div class="row"><span>Juliana Lima</span><span>›</span></div><div class="row"><span>Camila Rocha</span><span>›</span></div><div class="row"><span>Fernanda Costa</span><span>›</span></div>
+    </section>
+  </div>
+</main>
+
+<!-- Fluxo de novo agendamento -->
+<div class="modal-backdrop" id="bookingModal">
+  <div class="modal">
+    <div class="modal-head"><h3>Novo agendamento</h3><button class="close" onclick="closeBooking()">×</button></div>
+    <div class="steps">
+      <div class="step active" id="st1">1. Serviço</div>
+      <div class="step" id="st2">2. Data</div>
+      <div class="step" id="st3">3. Horário</div>
+      <div class="step" id="st4">4. Cliente</div>
+    </div>
+
+    <div class="form-section active" id="sec1">
+      <h4>Qual procedimento?</h4>
+      <div class="options">
+        <button class="option" onclick="selectService('Fio a fio','R$ 150,00','3h',this)"><b>Fio a fio</b><small>R$ 150,00 · 3 horas</small></button>
+        <button class="option" onclick="selectService('Volume brasileiro','R$ 180,00','3h',this)"><b>Volume brasileiro</b><small>R$ 180,00 · 3 horas</small></button>
+        <button class="option" onclick="selectService('Volume russo','R$ 220,00','3h',this)"><b>Volume russo</b><small>R$ 220,00 · 3 horas</small></button>
+        <button class="option" onclick="selectService('Mega volume','R$ 250,00','3h',this)"><b>Mega volume</b><small>R$ 250,00 · 3 horas</small></button>
+        <button class="option" onclick="selectService('Manutenção','R$ 100,00','1h30',this)"><b>Manutenção</b><small>R$ 100,00 · 1h30</small></button>
+      </div>
+    </div>
+
+    <div class="form-section" id="sec2">
+      <h4>Escolha a data</h4>
+      <div class="dates" id="dateOptions"></div>
+    </div>
+
+    <div class="form-section" id="sec3">
+      <h4>Horários disponíveis</h4>
+      <p style="color:var(--muted);font-size:12px" id="dateLabel"></p>
+      <div class="times">
+        <button class="time" onclick="selectTime('09:00',this)">09:00</button>
+        <button class="time" onclick="selectTime('11:30',this)">11:30</button>
+        <button class="time" onclick="selectTime('14:00',this)">14:00</button>
+        <button class="time" onclick="selectTime('15:30',this)">15:30</button>
+        <button class="time" onclick="selectTime('17:00',this)">17:00</button>
+        <button class="time" onclick="selectTime('18:30',this)">18:30</button>
+      </div>
+    </div>
+
+    <div class="form-section" id="sec4">
+      <h4>Dados da cliente</h4>
+      <div class="summary" id="summary"></div>
+      <input class="field" id="clientName" placeholder="Nome completo">
+      <input class="field" id="clientPhone" placeholder="WhatsApp (ex.: 67999999999)" inputmode="tel">
+    </div>
+
+    <div class="form-section" id="sec5">
+      <div class="success"><div class="check">✓</div><h3>Agendamento confirmado!</h3><p style="color:var(--muted)" id="confirmationText"></p><button class="btn" onclick="closeBooking()">Voltar ao dashboard</button></div>
+    </div>
+
+    <div class="modal-actions" id="modalActions">
+      <button class="secondary" id="backBtn" onclick="prevStep()" style="visibility:hidden">← Voltar</button>
+      <button class="btn" id="nextBtn" onclick="nextStep()">Continuar →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Financeiro -->
+<div class="finance-backdrop" id="financeModal">
+ <div class="finance-modal">
+  <div class="finance-head">
+   <h3>Financeiro</h3>
+   <button class="chat-close" onclick="closeFinance()">×</button>
+  </div>
+
+  <div class="finance-filter">
+   <span style="color:var(--muted);font-size:12px">Período:</span>
+   <select id="financePeriod" onchange="renderFinance()">
+    <option value="today">Hoje</option>
+    <option value="week">Esta semana</option>
+    <option value="month" selected>Este mês</option>
+    <option value="all">Todos os atendimentos</option>
+   </select>
+  </div>
+
+  <div class="finance-cards">
+   <div class="finance-card"><small>Faturamento</small><div class="finance-value" id="finRevenue">R$ 0,00</div><div class="finance-change" id="finRevenueChange"></div></div>
+   <div class="finance-card"><small>Atendimentos</small><div class="finance-value" id="finAppointments">0</div><div class="finance-change">procedimentos realizados</div></div>
+   <div class="finance-card"><small>Ticket médio</small><div class="finance-value" id="finTicket">R$ 0,00</div><div class="finance-change">por atendimento</div></div>
+   <div class="finance-card"><small>Comparação</small><div class="finance-value" id="finComparison">0%</div><div class="finance-change">vs. período anterior</div></div>
+  </div>
+
+  <div class="finance-section">
+   <h4>📊 Distribuição por procedimento</h4>
+   <div id="procedureStats"></div>
+  </div>
+
+  <div class="finance-section">
+   <h4>💵 Atendimentos realizados</h4>
+   <table class="finance-table">
+    <thead><tr><th>Data</th><th>Cliente</th><th>Procedimento</th><th>Valor</th></tr></thead>
+    <tbody id="financeTable"></tbody>
+   </table>
+   <div class="finance-total" id="financeTotal"></div>
+  </div>
+ </div>
+</div>
+
+<!-- Avaliações -->
+<div class="reviews-backdrop" id="reviewsModal">
+ <div class="reviews-modal">
+  <div class="reviews-head">
+   <h3>Avaliações das clientes</h3>
+   <button class="chat-close" onclick="closeReviews()">×</button>
+  </div>
+
+  <div id="reviewListView">
+   <div class="review-summary">
+    <div class="review-stat"><small>Média geral</small><div class="review-big" id="reviewAverage">4,9</div><div class="review-stars">★★★★★</div></div>
+    <div class="review-stat"><small>Total de avaliações</small><div class="review-big" id="reviewCount">12</div><div style="color:var(--muted);font-size:11px">clientes avaliadas</div></div>
+    <div class="review-stat"><small>Evolução</small><div class="review-big">+8%</div><div style="color:var(--muted);font-size:11px">comparado ao período anterior</div></div>
+   </div>
+   <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+    <button class="btn" onclick="showReviewForm()">＋ Adicionar avaliação</button>
+   </div>
+   <div class="review-list" id="reviewList"></div>
+  </div>
+
+  <div class="review-form" id="reviewForm">
+   <button class="detail-back" onclick="showReviewList()">← Voltar para avaliações</button>
+   <h3 style="margin-top:0">Nova avaliação</h3>
+   <input id="reviewName" placeholder="Nome da cliente">
+   <div style="color:var(--muted);font-size:12px;margin-top:8px">Nota</div>
+   <div class="rating-buttons" id="ratingButtons">
+    <button onclick="setRating(1)">1 ★</button><button onclick="setRating(2)">2 ★</button><button onclick="setRating(3)">3 ★</button><button onclick="setRating(4)">4 ★</button><button onclick="setRating(5)">5 ★</button>
+   </div>
+   <textarea id="reviewComment" placeholder="Comentário da cliente"></textarea>
+   <label style="display:flex;gap:8px;align-items:center;color:var(--muted);font-size:12px;margin:8px 0 14px"><input type="checkbox" id="reviewPermission"> A cliente autorizou publicar esta avaliação</label>
+   <button class="btn" onclick="saveReview()">Salvar avaliação</button>
+  </div>
+ </div>
+</div>
+
+<!-- Campanhas -->
+<div class="campaign-backdrop" id="campaignModal">
+ <div class="campaign-modal">
+  <div class="campaign-head">
+   <h3>Campanhas</h3>
+   <button class="chat-close" onclick="closeCampaigns()">×</button>
+  </div>
+
+  <div id="campaignCreate">
+   <div class="campaign-grid">
+    <div class="campaign-box">
+     <h4>🎯 Objetivo</h4>
+     <select class="campaign-select" id="campaignGoal" onchange="generateCampaign()">
+      <option value="reativar">Reativar clientes antigas</option>
+      <option value="oferta">Promover uma oferta</option>
+      <option value="vazios">Preencher horários vazios</option>
+      <option value="novas">Atrair novas clientes</option>
+     </select>
+    </div>
+    <div class="campaign-box">
+     <h4>👥 Público</h4>
+     <select class="campaign-select" id="campaignAudience" onchange="generateCampaign()">
+      <option value="inativas">Clientes inativas há mais de 30 dias</option>
+      <option value="todas">Todas as clientes</option>
+      <option value="fio">Clientes que fizeram fio a fio</option>
+      <option value="alto">Clientes que gastaram mais de R$ 400</option>
+     </select>
+    </div>
+   </div>
+
+   <div class="campaign-box" style="margin-top:14px">
+    <h4>🤖 Mensagem criada pela Gabi</h4>
+    <textarea class="campaign-textarea" id="campaignMessage"></textarea>
+    <div class="campaign-status" id="campaignStatus">Gabi preparou uma sugestão. Revise antes de aprovar.</div>
+   </div>
+
+   <div class="campaign-actions">
+    <button class="btn secondary" onclick="generateCampaign()">✨ Gerar novamente</button>
+    <button class="btn" onclick="approveCampaign()">✓ Aprovar campanha</button>
+   </div>
+
+   <div class="campaign-list">
+    <b>Campanhas recentes</b>
+    <div id="campaignHistory"></div>
+   </div>
+  </div>
+ </div>
+</div>
+
+<!-- Área de Clientes -->
+<div class="clients-backdrop" id="clientsModal">
+  <div class="clients-modal">
+    <div class="clients-head">
+      <h3>Clientes</h3>
+      <button class="chat-close" onclick="closeClients()">×</button>
+    </div>
+
+    <div id="clientListView">
+      <div class="clients-tools">
+        <input class="clients-search" id="clientSearch" placeholder="🔎 Buscar por nome ou WhatsApp..." oninput="renderClients()">
+        <button class="btn client-add" onclick="showAddClient()">＋ Nova cliente</button>
+      </div>
+      <div class="client-list" id="clientList"></div>
+    </div>
+
+    <div class="add-client-form" id="addClientForm">
+      <button class="detail-back" onclick="showClientList()">← Voltar para clientes</button>
+      <h3 style="margin-top:0">Cadastrar cliente</h3>
+      <input class="field" id="newClientName" placeholder="Nome completo">
+      <input class="field" id="newClientPhone" placeholder="WhatsApp">
+      <button class="btn" onclick="addClient()">Salvar cliente</button>
+    </div>
+
+    <div class="client-detail" id="clientDetail">
+      <button class="detail-back" onclick="showClientList()">← Voltar para clientes</button>
+      <div id="clientDetailContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Chat da Gabi -->
+<div class="chat-backdrop" id="gabiChat">
+  <div class="chat-modal">
+    <div class="chat-head">
+      <div class="gabi-avatar">👩🏻</div>
+      <div><h3>Gabi</h3><div class="online">● Online 24h</div></div>
+      <button class="chat-close" onclick="closeGabi()">×</button>
+    </div>
+    <div class="chat-messages" id="chatMessages">
+      <div class="msg gabi">Oii! 💕 Eu sou a Gabi, sua assistente virtual da Gabi Lash.<br><br>Posso te ajudar com nossos procedimentos, valores e horários. O que você gostaria de fazer?</div>
+    </div>
+    <div class="quick">
+      <button onclick="quickGabi('Quero ver os serviços')">✨ Serviços</button>
+      <button onclick="quickGabi('Quanto custa o volume brasileiro?')">💰 Preços</button>
+      <button onclick="quickGabi('Quero agendar um horário')">📅 Agendar</button>
+    </div>
+    <div class="chat-input">
+      <input id="gabiInput" placeholder="Digite sua mensagem..." onkeydown="if(event.key==='Enter')sendGabi()">
+      <button class="send" onclick="sendGabi()">➤</button>
+    </div>
+  </div>
+</div>
+
+<div class="mobile-nav"><button>⌂<br>Início</button><button>▣<br>Agenda</button><button>♟<br>Clientes</button><button>⚑<br>Campanhas</button></div>
+</div>
+
+<script>
+let booking={service:null,price:null,duration:null,date:null,time:null};
+
+function openBooking(){
+  booking={service:null,price:null,duration:null,date:null,time:null};
+  document.getElementById('bookingModal').style.display='flex';
+  showStep(1);
+  document.querySelectorAll('.option,.time').forEach(x=>x.classList.remove('selected'));
+}
+function closeBooking(){document.getElementById('bookingModal').style.display='none'}
+function showStep(n){
+  for(let i=1;i<=5;i++){
+    const sec=document.getElementById('sec'+i);
+    if(sec) sec.classList.toggle('active',i===n);
+    const st=document.getElementById('st'+i);
+    if(st) st.classList.toggle('active',i===n);
+  }
+  document.getElementById('backBtn').style.visibility=(n>1&&n<5)?'visible':'hidden';
+  document.getElementById('nextBtn').style.display=(n<5)?'block':'none';
+  if(n===4){
+    document.getElementById('summary').innerHTML=
+      '<b>'+booking.service+'</b><br>'+booking.price+' · '+booking.duration+
+      '<br>📅 '+booking.date+'<br>🕐 '+booking.time;
+  }
+}
+function selectService(service,price,duration,el){
+  booking.service=service;booking.price=price;booking.duration=duration;
+  document.querySelectorAll('.option').forEach(x=>x.classList.remove('selected'));
+  el.classList.add('selected'); showStep(2); buildDates();
+}
+function buildDates(){
+  const box=document.getElementById('dateOptions');box.innerHTML='';
+  const now=new Date();
+  for(let i=1;i<=14;i++){
+    const d=new Date(now);d.setDate(now.getDate()+i);
+    const days=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    const date=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+    const b=document.createElement('button');b.className='date';
+    b.innerHTML='<b>'+days[d.getDay()]+'</b><br>'+date;
+    b.onclick=()=>selectDate(date,b);box.appendChild(b);
+  }
+}
+function selectDate(date,el){
+  booking.date=date;document.querySelectorAll('.date').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');
+  document.getElementById('dateLabel').textContent='Data escolhida: '+date+' · horários livres para '+booking.service;
+  showStep(3);
+}
+function selectTime(time,el){
+  booking.time=time;document.querySelectorAll('.time').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');showStep(4);
+}
+function nextStep(){
+  const current=[1,2,3,4].find(i=>document.getElementById('sec'+i).classList.contains('active'));
+  if(current===1&&!booking.service){alert('Escolha um procedimento.');return}
+  if(current===2&&!booking.date){alert('Escolha uma data.');return}
+  if(current===3&&!booking.time){alert('Escolha um horário.');return}
+  if(current===4){
+    const name=document.getElementById('clientName').value.trim();
+    const phone=document.getElementById('clientPhone').value.trim();
+    if(!name||!phone){alert('Preencha nome e WhatsApp.');return}
+    document.getElementById('confirmationText').innerHTML=
+      'Gabi: Perfeito! 💕 Te espero dia <b>'+booking.date+'</b> às <b>'+booking.time+'</b>!<br><br>'+
+      'Cliente: '+name+'<br>WhatsApp: '+phone;
+    if(typeof registerCompletedBooking==='function'){registerCompletedBooking({name:booking.name,phone:booking.phone,service:booking.service,date:booking.date,time:booking.time,price:booking.price});}
+showStep(5);return;
+  }
+  showStep(current+1);
+}
+function prevStep(){
+  const current=[2,3,4].find(i=>document.getElementById('sec'+i).classList.contains('active'));
+  if(current) showStep(current-1);
+}
+document.getElementById('bookingModal').addEventListener('click',function(e){if(e.target===this)closeBooking()});
+</script>
+
+<script>
+function openGabi(){document.getElementById('gabiChat').style.display='flex';setTimeout(()=>document.getElementById('gabiInput').focus(),100)}
+function closeGabi(){document.getElementById('gabiChat').style.display='none'}
+function addMsg(text,type){
+  const box=document.getElementById('chatMessages');
+  const div=document.createElement('div');div.className='msg '+type;div.innerHTML=text;box.appendChild(div);box.scrollTop=box.scrollHeight;
+}
+function gabiReply(message){
+  const m=message.toLowerCase();
+  if(m.includes('serviço')||m.includes('procedimento')||m.includes('extensão')){
+    return 'Claro! ✨ Temos:<br>• Fio a fio — <b>R$ 150</b><br>• Volume brasileiro — <b>R$ 180</b><br>• Volume russo — <b>R$ 220</b><br>• Mega volume — <b>R$ 250</b><br>• Manutenção — <b>R$ 100</b><br><br>Todos os valores do alongamento têm duração média de 3 horas, exceto manutenção.';
+  }
+  if(m.includes('preço')||m.includes('preco')||m.includes('quanto custa')||m.includes('valor')){
+    if(m.includes('brasileiro')) return 'O <b>Volume brasileiro</b> custa R$ 180,00. 💕 A duração média é de 3 horas. Quer que eu veja um horário para você?';
+    if(m.includes('russo')) return 'O <b>Volume russo</b> custa R$ 220,00. ✨ A duração média é de 3 horas. Quer agendar?';
+    if(m.includes('mega')) return 'O <b>Mega volume</b> custa R$ 250,00. ✨ A duração média é de 3 horas. Quer agendar?';
+    if(m.includes('fio')) return 'O <b>Fio a fio</b> custa R$ 150,00. 💕 A duração média é de 3 horas. Quer agendar?';
+    return 'Claro! Temos procedimentos a partir de <b>R$ 100</b>. Posso te mostrar todos os serviços e valores. ✨';
+  }
+  if(m.includes('agendar')||m.includes('horário')||m.includes('horario')||m.includes('marcar')){
+    return 'Perfeito! 💕 Vou te ajudar a agendar. Clique em <b>Agendar horário</b> no botão abaixo ou escolha um procedimento primeiro. <br><br><button class="btn" style="margin-top:8px" onclick="closeGabi();openBooking()">Agendar horário →</button>';
+  }
+  if(m.includes('oi')||m.includes('olá')||m.includes('ola')||m.includes('bom dia')||m.includes('boa tarde')){
+    return 'Oii! 💕 Que bom falar com você! Sou a Gabi. Posso te ajudar com serviços, valores ou agendamento. ✨';
+  }
+  if(m.includes('obrigad')||m.includes('valeu')){
+    return 'Imagina! 💕 Quando precisar, é só falar comigo. Vou ficar por aqui!';
+  }
+  return 'Entendi! 💕 Posso te ajudar com <b>serviços, preços ou agendamento</b>. Se preferir, me diga qual procedimento você está pensando em fazer.';
+}
+function sendGabi(){
+  const input=document.getElementById('gabiInput');const text=input.value.trim();if(!text)return;
+  addMsg(text,'user');input.value='';
+  const typing=document.createElement('div');typing.className='chat-typing';typing.id='typing';typing.textContent='Gabi está digitando...';document.getElementById('chatMessages').appendChild(typing);
+  setTimeout(()=>{typing.remove();addMsg(gabiReply(text),'gabi')},550);
+}
+function quickGabi(text){document.getElementById('gabiInput').value=text;sendGabi()}
+document.getElementById('gabiChat').addEventListener('click',function(e){if(e.target===this)closeGabi()});
+</script>
+
+<script>
+let clients=[
+ {name:'Maria Oliveira',phone:'(67) 99999-1111',spent:'R$ 540,00',rating:'★★★★★',last:'Volume brasileiro',history:[['05/10/2026','Volume brasileiro','R$ 180'],['05/09/2026','Volume brasileiro','R$ 180'],['05/08/2026','Fio a fio','R$ 150']]},
+ {name:'Juliana Lima',phone:'(67) 99999-2222',spent:'R$ 430,00',rating:'★★★★★',last:'Volume brasileiro',history:[['05/10/2026','Volume brasileiro','R$ 180'],['04/09/2026','Manutenção','R$ 100'],['04/08/2026','Fio a fio','R$ 150']]},
+ {name:'Camila Rocha',phone:'(67) 99999-3333',spent:'R$ 300,00',rating:'★★★★☆',last:'Manutenção',history:[['05/10/2026','Manutenção','R$ 100'],['10/09/2026','Volume russo','R$ 200']]},
+ {name:'Fernanda Costa',phone:'(67) 99999-4444',spent:'R$ 470,00',rating:'★★★★★',last:'Volume russo',history:[['05/10/2026','Volume russo','R$ 220'],['10/09/2026','Volume russo','R$ 220'],['10/08/2026','Manutenção','R$ 30']]}
+];
+
+function openClients(){document.getElementById('clientsModal').style.display='flex';showClientList();renderClients()}
+function closeClients(){document.getElementById('clientsModal').style.display='none'}
+function showClientList(){document.getElementById('clientListView').style.display='block';document.getElementById('addClientForm').style.display='none';document.getElementById('clientDetail').style.display='none';renderClients()}
+function showAddClient(){document.getElementById('clientListView').style.display='none';document.getElementById('addClientForm').style.display='block';document.getElementById('clientDetail').style.display='none';document.getElementById('newClientName').focus()}
+function renderClients(){
+ const q=(document.getElementById('clientSearch')?.value||'').toLowerCase();
+ const list=document.getElementById('clientList');if(!list)return;
+ const filtered=clients.filter(c=>(c.name+' '+c.phone).toLowerCase().includes(q));
+ if(!filtered.length){list.innerHTML='<div class="client-empty">Nenhuma cliente encontrada.</div>';return}
+ list.innerHTML=filtered.map((c,i)=>`
+ <div class="client-card">
+   <div class="client-name"><b>${c.name}</b><small>${c.last}</small></div>
+   <div class="client-phone client-meta">📱 ${c.phone}</div>
+   <div class="client-money">${c.spent}</div>
+   <div class="client-rating stars">${c.rating}</div>
+   <button class="client-view" onclick="viewClient(${clients.indexOf(c)})">Ver histórico</button>
+ </div>`).join('');
+}
+function viewClient(i){
+ const c=clients[i];
+ document.getElementById('clientListView').style.display='none';
+ document.getElementById('addClientForm').style.display='none';
+ document.getElementById('clientDetail').style.display='block';
+ document.getElementById('clientDetailContent').innerHTML=`
+   <h3 style="margin:0 0 5px">${c.name}</h3>
+   <p style="color:var(--muted);margin:0 0 18px">📱 ${c.phone}</p>
+   <div class="detail-grid">
+    <div class="detail-box"><h4>Resumo</h4><div>💰 Total gasto: <b style="color:var(--gold2)">${c.spent}</b></div><div style="margin-top:8px">⭐ Avaliação: <span class="stars">${c.rating}</span></div><div style="margin-top:8px">✨ Último serviço: ${c.last}</div></div>
+    <div class="detail-box"><h4>Histórico de agendamentos</h4>${c.history.map(h=>`<div class="history-row"><span>${h[0]}<br><small style="color:var(--muted)">${h[1]}</small></span><b>${h[2]}</b></div>`).join('')}</div>
+   </div>`;
+}
+function addClient(){
+ const name=document.getElementById('newClientName').value.trim();
+ const phone=document.getElementById('newClientPhone').value.trim();
+ if(!name||!phone){alert('Preencha nome e WhatsApp.');return}
+ clients.unshift({name,phone,spent:'R$ 0,00',rating:'—',last:'Nenhum atendimento',history:[]});
+ document.getElementById('newClientName').value='';document.getElementById('newClientPhone').value='';
+ showClientList();
+}
+document.getElementById('clientsModal').addEventListener('click',function(e){if(e.target===this)closeClients()});
+</script>
+
+<script>
+let campaignHistory=[];
+const campaignMessages={
+ reativar:"Oii! 💕 Sentimos sua falta no GABI LASH! Que tal renovar seu olhar e voltar a se sentir ainda mais linda? ✨ Temos horários disponíveis esta semana. Quer que eu reserve um para você?",
+ oferta:"Oii! ✨ Temos uma condição especial no GABI LASH para você renovar seu olhar. 💕 Aproveite a nossa oferta por tempo limitado. Quer saber mais e garantir seu horário?",
+ vazios:"Oii! 💕 A GABI LASH abriu alguns horários especiais para esta semana! Se você estava esperando uma oportunidade para renovar seus cílios, esse pode ser o momento. ✨ Quer reservar?",
+ novas:"Seu olhar merece esse cuidado. ✨ Conheça o GABI LASH e descubra o procedimento ideal para você. 💕 Fale com a Gabi e encontre seu primeiro horário."
+};
+function openCampaigns(){
+ document.getElementById('campaignModal').style.display='flex';
+ generateCampaign();renderCampaignHistory();
+}
+function closeCampaigns(){document.getElementById('campaignModal').style.display='none'}
+function generateCampaign(){
+ const goal=document.getElementById('campaignGoal').value;
+ const audience=document.getElementById('campaignAudience').value;
+ let msg=campaignMessages[goal];
+ const audienceText={
+  inativas:"clientes que não agendam há mais de 30 dias",
+  todas:"nossas clientes",
+  fio:"clientes que já fizeram fio a fio",
+  alto:"nossas clientes especiais"
+ }[audience];
+ if(goal==="reativar") msg="Oii! 💕 Sentimos sua falta no GABI LASH! Que tal renovar seu olhar e voltar a se sentir ainda mais linda? ✨ Temos horários disponíveis esta semana. Quer que eu reserve um para você?";
+ document.getElementById('campaignMessage').value=msg;
+ document.getElementById('campaignStatus').textContent="Gabi preparou uma sugestão para "+audienceText+". Revise antes de aprovar.";
+}
+function approveCampaign(){
+ const msg=document.getElementById('campaignMessage').value.trim();
+ if(!msg){alert('Crie uma mensagem antes de aprovar.');return}
+ const goal=document.getElementById('campaignGoal').selectedOptions[0].text;
+ const audience=document.getElementById('campaignAudience').selectedOptions[0].text;
+ campaignHistory.unshift({goal,audience,msg,status:'Aprovada'});
+ renderCampaignHistory();
+ document.getElementById('campaignStatus').textContent="✓ Campanha aprovada! Pronta para envio.";
+}
+function renderCampaignHistory(){
+ const el=document.getElementById('campaignHistory');if(!el)return;
+ if(!campaignHistory.length){el.innerHTML='<div class="campaign-item"><span>Nenhuma campanha criada ainda.</span></div>';return}
+ el.innerHTML=campaignHistory.slice(0,5).map(c=>`<div class="campaign-item"><div><b>${c.goal}</b><br><small>${c.audience}</small></div><span style="color:var(--gold2);font-size:11px">✓ ${c.status}</span></div>`).join('');
+}
+document.getElementById('campaignModal').addEventListener('click',function(e){if(e.target===this)closeCampaigns()});
+</script>
+
+<script>
+(function(){
+  function bindCampaignButtons(){
+    const buttons=[...document.querySelectorAll('button')];
+    buttons.forEach(function(btn){
+      const txt=(btn.textContent||'').trim();
+      if(txt.includes('Campanhas')){
+        btn.onclick=function(e){
+          e.preventDefault();
+          if(typeof openCampaigns==='function') openCampaigns();
+        };
+      }
+    });
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',bindCampaignButtons);
+  }else{
+    bindCampaignButtons();
+  }
+})();
+</script>
+
+<script>
+let reviews=[
+ {name:'Maria Oliveira',rating:5,comment:'Amei o resultado! Meus cílios ficaram perfeitos e o atendimento foi maravilhoso. 💕',date:'05/10/2026',published:true},
+ {name:'Juliana Lima',rating:5,comment:'Sempre saio muito satisfeita. A GABI LASH virou meu lugar favorito!',date:'04/10/2026',published:true},
+ {name:'Camila Rocha',rating:4,comment:'Ficou lindo e durou bastante. Atendimento muito cuidadoso.',date:'28/09/2026',published:true},
+ {name:'Fernanda Costa',rating:5,comment:'Resultado impecável! Já estou ansiosa pelo próximo atendimento. ✨',date:'22/09/2026',published:true}
+];
+let selectedRating=5;
+function openReviews(){document.getElementById('reviewsModal').style.display='flex';showReviewList()}
+function closeReviews(){document.getElementById('reviewsModal').style.display='none'}
+function showReviewList(){document.getElementById('reviewListView').style.display='block';document.getElementById('reviewForm').style.display='none';renderReviews()}
+function showReviewForm(){document.getElementById('reviewListView').style.display='none';document.getElementById('reviewForm').style.display='block';setRating(5);document.getElementById('reviewName').focus()}
+function setRating(n){selectedRating=n;document.querySelectorAll('#ratingButtons button').forEach((b,i)=>b.classList.toggle('active',i<n))}
+function renderReviews(){
+ const list=document.getElementById('reviewList');if(!list)return;
+ list.innerHTML=reviews.map((r,i)=>`<div class="review-card">
+  <div class="review-card-top"><div><b>${r.name}</b><br><small>${r.date}</small></div><div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div></div>
+  <div class="review-comment">"${r.comment}"</div>
+  ${r.published?'<div class="published">✓ Autorizada para publicação · Destaque da Gabi</div>':'<div style="font-size:10px;color:var(--muted)">Não autorizada para publicação</div>'}
+ </div>`).join('');
+ const avg=reviews.reduce((s,r)=>s+r.rating,0)/reviews.length;
+ document.getElementById('reviewAverage').textContent=avg.toFixed(1).replace('.',',');
+ document.getElementById('reviewCount').textContent=reviews.length;
+}
+function saveReview(){
+ const name=document.getElementById('reviewName').value.trim();
+ const comment=document.getElementById('reviewComment').value.trim();
+ if(!name||!comment){alert('Preencha nome e comentário.');return}
+ reviews.unshift({name,rating:selectedRating,comment,date:new Date().toLocaleDateString('pt-BR'),published:document.getElementById('reviewPermission').checked});
+ document.getElementById('reviewName').value='';document.getElementById('reviewComment').value='';document.getElementById('reviewPermission').checked=false;
+ showReviewList();
+}
+document.getElementById('reviewsModal').addEventListener('click',function(e){if(e.target===this)closeReviews()});
+
+// Garante que qualquer botão/atalho com "Avaliações" abra o módulo.
+(function(){
+ function bindReviewButtons(){
+  document.querySelectorAll('button').forEach(function(btn){
+   if((btn.textContent||'').includes('Avaliações')){
+    btn.onclick=function(e){e.preventDefault();openReviews()};
+   }
+  });
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindReviewButtons);else bindReviewButtons();
+})();
+</script>
+
+<script>
+const financialRecords=[
+ {date:'05/10/2026',iso:'2026-10-05',client:'Maria Oliveira',service:'Volume brasileiro',value:180},
+ {date:'05/10/2026',iso:'2026-10-05',client:'Juliana Lima',service:'Fio a fio',value:150},
+ {date:'04/10/2026',iso:'2026-10-04',client:'Camila Rocha',service:'Manutenção',value:100},
+ {date:'03/10/2026',iso:'2026-10-03',client:'Fernanda Costa',service:'Volume russo',value:220},
+ {date:'02/10/2026',iso:'2026-10-02',client:'Ana Souza',service:'Mega volume',value:250},
+ {date:'01/10/2026',iso:'2026-10-01',client:'Carolina Alves',service:'Volume brasileiro',value:180},
+ {date:'29/09/2026',iso:'2026-09-29',client:'Beatriz Lima',service:'Fio a fio',value:150},
+ {date:'27/09/2026',iso:'2026-09-27',client:'Larissa Costa',service:'Volume russo',value:220},
+ {date:'25/09/2026',iso:'2026-09-25',client:'Paula Mendes',service:'Manutenção',value:100},
+ {date:'22/09/2026',iso:'2026-09-22',client:'Amanda Rocha',service:'Mega volume',value:250},
+ {date:'18/09/2026',iso:'2026-09-18',client:'Isabela Souza',service:'Volume brasileiro',value:180},
+ {date:'15/09/2026',iso:'2026-09-15',client:'Renata Lima',service:'Fio a fio',value:150}
+];
+function brl(v){return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
+function openFinance(){document.getElementById('financeModal').style.display='flex';renderFinance()}
+function closeFinance(){document.getElementById('financeModal').style.display='none'}
+function periodRecords(period){
+ const now=new Date('2026-10-05T12:00:00');
+ if(period==='all')return financialRecords;
+ const start=new Date(now);
+ if(period==='today')start.setDate(now.getDate());
+ if(period==='week')start.setDate(now.getDate()-6);
+ if(period==='month')start.setDate(1);
+ return financialRecords.filter(r=>new Date(r.iso+'T12:00:00')>=start && new Date(r.iso+'T12:00:00')<=now);
+}
+function renderFinance(){
+ const period=document.getElementById('financePeriod')?.value||'month';
+ const records=periodRecords(period);
+ const total=records.reduce((s,r)=>s+r.value,0);
+ const ticket=records.length?total/records.length:0;
+ document.getElementById('finRevenue').textContent=brl(total);
+ document.getElementById('finAppointments').textContent=records.length;
+ document.getElementById('finTicket').textContent=brl(ticket);
+ const previous=period==='today'?0:period==='week'?950:period==='month'?1650:0;
+ const comparison=previous?((total-previous)/previous*100):0;
+ document.getElementById('finComparison').textContent=(comparison>=0?'+':'')+comparison.toFixed(0)+'%';
+ document.getElementById('finRevenueChange').textContent=previous?'vs. período anterior: '+brl(previous):'período atual';
+ document.getElementById('financeTotal').textContent='Total: '+brl(total);
+
+ const tbody=document.getElementById('financeTable');
+ tbody.innerHTML=records.length?records.map(r=>`<tr><td>${r.date}</td><td>${r.client}</td><td>${r.service}</td><td style="color:var(--gold2)">${brl(r.value)}</td></tr>`).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--muted)">Nenhum atendimento no período.</td></tr>';
+
+ const counts={};records.forEach(r=>{counts[r.service]=(counts[r.service]||0)+r.value});
+ const max=Math.max(...Object.values(counts),1);
+ document.getElementById('procedureStats').innerHTML=Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([name,val])=>`<div style="margin:9px 0"><div style="display:flex;justify-content:space-between;font-size:11px"><span>${name}</span><b>${brl(val)}</b></div><div class="finance-bar"><span style="width:${val/max*100}%"></span></div></div>`).join('')||'<span style="color:var(--muted)">Sem dados.</span>';
+}
+document.getElementById('financeModal').addEventListener('click',function(e){if(e.target===this)closeFinance()});
+(function(){
+ function bindFinanceButtons(){
+  document.querySelectorAll('button').forEach(function(btn){
+   if((btn.textContent||'').includes('Financeiro')){
+    btn.onclick=function(e){e.preventDefault();openFinance()};
+   }
+  });
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindFinanceButtons);else bindFinanceButtons();
+})();
+</script>
+
+
+<!-- Relatórios -->
+<div class="reports-backdrop" id="reportsModal">
+ <div class="reports-modal">
+  <div class="reports-head">
+   <h3>Relatórios</h3>
+   <button class="chat-close" onclick="closeReports()">×</button>
+  </div>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+   <select id="reportPeriod" class="full-select" style="width:170px" onchange="renderReports()">
+    <option value="month">Este mês</option><option value="week">Esta semana</option><option value="all">Todos os dados</option>
+   </select>
+  </div>
+  <div class="report-cards">
+   <div class="report-card"><small>Faturamento</small><div class="report-value" id="repRevenue">R$ 0,00</div></div>
+   <div class="report-card"><small>Atendimentos</small><div class="report-value" id="repCount">0</div></div>
+   <div class="report-card"><small>Ticket médio</small><div class="report-value" id="repTicket">R$ 0,00</div></div>
+   <div class="report-card"><small>Procedimento líder</small><div class="report-value" id="repLeader">—</div></div>
+  </div>
+  <div class="report-section">
+   <h4>📊 Vendas por procedimento</h4>
+   <div id="reportProcedures"></div>
+  </div>
+  <div class="report-section">
+   <h4>📅 Resumo dos atendimentos</h4>
+   <table class="report-table"><thead><tr><th>Data</th><th>Cliente</th><th>Procedimento</th><th>Valor</th></tr></thead><tbody id="reportRows"></tbody></table>
+  </div>
+ </div>
+</div>
+<!-- Gestão completa -->
+<div class="full-backdrop" id="fullModal">
+ <div class="full-modal">
+  <div class="full-head"><h3 id="fullTitle">Gestão</h3><button class="chat-close" onclick="closeFull()">×</button></div>
+  <div id="fullContent"></div>
+ </div>
+</div>
+
+<script>
+/* ===== GESTÃO COMPLETA ===== */
+const LS={services:'gabi_services_v1',clients:'gabi_clients_v1',appointments:'gabi_appointments_v1',settings:'gabi_settings_v1'};
+const defaultServices=[
+ {name:'Fio a fio',price:150,duration:'3h'},
+ {name:'Volume brasileiro',price:180,duration:'3h'},
+ {name:'Volume russo',price:220,duration:'3h'},
+ {name:'Mega volume',price:250,duration:'3h'},
+ {name:'Manutenção',price:100,duration:'1h30'}
+];
+let services=JSON.parse(localStorage.getItem(LS.services)||'null')||defaultServices;
+let appointments=JSON.parse(localStorage.getItem(LS.appointments)||'[]');
+let settings=JSON.parse(localStorage.getItem(LS.settings)||'null')||{
+ hours:{'0':['09:00','18:30'],'1':['09:00','18:30'],'2':['09:00','18:30'],'3':['09:00','18:30'],'4':['09:00','18:30'],'5':['09:00','18:30'],'6':['09:00','14:00']},
+ reminders:true, reminderHours:24, whatsapp:''
+};
+function saveAll(){localStorage.setItem(LS.services,JSON.stringify(services));localStorage.setItem(LS.appointments,JSON.stringify(appointments));localStorage.setItem(LS.settings,JSON.stringify(settings))}
+function closeFull(){document.getElementById('fullModal').style.display='none'}
+function openFull(title,content){document.getElementById('fullTitle').textContent=title;document.getElementById('fullContent').innerHTML=content;document.getElementById('fullModal').style.display='flex'}
+document.getElementById('fullModal').addEventListener('click',e=>{if(e.target.id==='fullModal')closeFull()});
+
+function openServicesAdmin(){
+ openFull('Serviços e preços',`
+  <div class="full-box">
+   <h4>Gerenciar procedimentos</h4>
+   <div id="serviceAdminList"></div>
+   <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
+    <b>Adicionar serviço</b>
+    <input class="full-input" id="newSvcName" placeholder="Nome do serviço">
+    <div class="full-grid"><input class="full-input" id="newSvcPrice" type="number" placeholder="Preço (R$)"><input class="full-input" id="newSvcDuration" placeholder="Duração"></div>
+    <button class="btn" onclick="addServiceAdmin()">＋ Adicionar serviço</button>
+   </div>
+  </div>`);
+ renderServiceAdmin();
+}
+function renderServiceAdmin(){
+ const el=document.getElementById('serviceAdminList');if(!el)return;
+ el.innerHTML=services.map((s,i)=>`<div class="service-admin">
+  <b>${s.name}</b><span class="svc-meta gold">R$ ${s.price}</span><span class="svc-meta full-muted">${s.duration}</span>
+  <button class="client-view" onclick="removeServiceAdmin(${i})">Excluir</button></div>`).join('');
+}
+function addServiceAdmin(){
+ const name=document.getElementById('newSvcName').value.trim(),price=Number(document.getElementById('newSvcPrice').value),duration=document.getElementById('newSvcDuration').value.trim();
+ if(!name||!price||!duration){alert('Preencha nome, preço e duração.');return}
+ services.push({name,price,duration});saveAll();renderServiceAdmin();
+ document.getElementById('newSvcName').value='';document.getElementById('newSvcPrice').value='';document.getElementById('newSvcDuration').value='';
+}
+function removeServiceAdmin(i){if(confirm('Excluir este serviço?')){services.splice(i,1);saveAll();renderServiceAdmin()}}
+
+function openScheduleAdmin(){
+ let rows=Object.entries({0:'Domingo',1:'Segunda',2:'Terça',3:'Quarta',4:'Quinta',5:'Sexta',6:'Sábado'}).map(([d,n])=>{
+  const h=settings.hours[d]||['09:00','18:30'];
+  return `<div class="full-row"><b>${n}</b><span><input class="full-input" style="width:100px;display:inline-block" id="h${d}a" value="${h[0]}"> às <input class="full-input" style="width:100px;display:inline-block" id="h${d}b" value="${h[1]}"></span></div>`;
+ }).join('');
+ openFull('Agenda e horários',`
+  <div class="full-box"><h4>Horário de funcionamento por dia</h4>${rows}
+  <div class="full-actions"><button class="btn" onclick="saveScheduleAdmin()">Salvar horários</button></div></div>
+  <div class="full-box" style="margin-top:12px"><h4>Próximos agendamentos</h4><div id="scheduleList"></div></div>`);
+ renderScheduleList();
+}
+function saveScheduleAdmin(){
+ for(let d=0;d<7;d++)settings.hours[d]=[document.getElementById('h'+d+'a').value,document.getElementById('h'+d+'b').value];
+ saveAll();alert('Horários salvos com sucesso.');
+}
+function renderScheduleList(){
+ const el=document.getElementById('scheduleList');if(!el)return;
+ const arr=appointments.slice(-10).reverse();
+ el.innerHTML=arr.length?arr.map(a=>`<div class="full-row"><span><b>${a.name}</b><br><span class="full-muted">${a.service} · ${a.date} · ${a.time}</span></span><b class="gold">R$ ${a.price}</b></div>`).join(''):'<span class="full-muted">Nenhum agendamento registrado ainda.</span>';
+}
+
+function openRemindersAdmin(){
+ const now=new Date('2026-10-05T12:00:00');
+ const list=appointments.length?appointments.slice(-10).reverse():[
+  {name:'Maria Oliveira',service:'Volume brasileiro',date:'10/10/2026',time:'15:30',phone:'(67) 99999-1111'}
+ ];
+ openFull('Lembretes automáticos',`
+  <div class="full-box">
+   <h4>Configuração</h4>
+   <div class="toggle-line"><span>Enviar lembrete automático</span><input id="remToggle" type="checkbox" ${settings.reminders?'checked':''}></div>
+   <div class="toggle-line"><span>Antecedência</span><select id="remHours" class="full-select" style="width:140px"><option value="24" ${settings.reminderHours==24?'selected':''}>24 horas</option><option value="48" ${settings.reminderHours==48?'selected':''}>48 horas</option><option value="2" ${settings.reminderHours==2?'selected':''}>2 horas</option></select></div>
+   <div class="full-actions"><button class="btn" onclick="saveReminderSettings()">Salvar configuração</button></div>
+  </div>
+  <div class="full-box" style="margin-top:12px"><h4>Prévia dos lembretes</h4><div id="reminderList"></div></div>`);
+ document.getElementById('reminderList').innerHTML=list.map(a=>`<div class="reminder-card"><b>${a.name}</b> · ${a.date} às ${a.time}<br><span class="full-muted">Gabi: Oii! 💕 Passando para lembrar que você tem um horário no salão. ${a.service}. Te esperamos! ✨</span><div style="margin-top:8px"><button class="client-view">✓ Confirmar presença</button></div></div>`).join('');
+}
+function saveReminderSettings(){settings.reminders=document.getElementById('remToggle').checked;settings.reminderHours=Number(document.getElementById('remHours').value);saveAll();alert('Configuração de lembretes salva.')}
+
+function openSettingsAdmin(){
+ openFull('Configurações do GABI LASH',`
+  <div class="full-grid">
+   <div class="full-box"><h4>Salão</h4><label class="full-muted">Nome</label><input class="full-input" value="GABI LASH" disabled><label class="full-muted">WhatsApp para contato</label><input class="full-input" id="salonWhatsapp" value="${settings.whatsapp||''}" placeholder="(67) 99999-9999"><div class="full-actions"><button class="btn" onclick="saveSalonSettings()">Salvar</button></div></div>
+   <div class="full-box"><h4>Gabi</h4><div class="toggle-line"><span>Atendimento 24 horas</span><input type="checkbox" checked disabled></div><div class="toggle-line"><span>Confirmação antes de campanhas</span><input type="checkbox" checked disabled></div><div class="toggle-line"><span>Transferir dúvidas para proprietária</span><input type="checkbox" checked disabled></div></div>
+  </div>`);
+}
+function saveSalonSettings(){settings.whatsapp=document.getElementById('salonWhatsapp').value;saveAll();alert('Configurações salvas.')}
+
+/* Sincroniza clientes e agendamentos do fluxo existente quando a confirmação ocorre. */
+window.registerCompletedBooking=function(b){
+ const existing=clients.find(c=>c.phone.replace(/\D/g,'')===b.phone.replace(/\D/g,'')||c.name.toLowerCase()===b.name.toLowerCase());
+ const svc=services.find(s=>s.name===b.service)||{price:b.price||0};
+ if(!existing){
+  clients.unshift({name:b.name,phone:b.phone,spent:'R$ 0,00',rating:'—',last:b.service,history:[]});
+ }else{
+  existing.last=b.service;
+ }
+ const c=clients.find(c=>c.phone.replace(/\D/g,'')===b.phone.replace(/\D/g,'')||c.name.toLowerCase()===b.name.toLowerCase());
+ if(c){
+  c.history.unshift([b.date,b.service,'R$ '+svc.price]);
+  const total=c.history.reduce((sum,h)=>sum+Number(String(h[2]).replace(/[^\d,]/g,'').replace(',','.')),0);
+  c.spent=brl(total);
+ }
+ appointments.push({name:b.name,phone:b.phone,service:b.service,price:svc.price,date:b.date,time:b.time});
+ saveAll();
+};
+
+/* Liga atalhos existentes por texto, sem depender da estrutura exata do HTML. */
+(function bindAllManagement(){
+ function bind(){
+  document.querySelectorAll('button').forEach(btn=>{
+   const t=(btn.textContent||'').trim();
+   if(t.includes('Serviços')||t.includes('SERVIÇOS')) btn.onclick=e=>{e.preventDefault();openServicesAdmin()};
+   if(t.includes('Agenda')||t.includes('agenda')) btn.onclick=e=>{e.preventDefault();openScheduleAdmin()};
+   if(t.includes('Lembretes')||t.includes('lembretes')) btn.onclick=e=>{e.preventDefault();openRemindersAdmin()};
+   if(t.includes('Configurações')||t.includes('Configuração')) btn.onclick=e=>{e.preventDefault();openSettingsAdmin()};
+  });
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+})();
+</script>
+
+<script>
+function openReports(){document.getElementById('reportsModal').style.display='flex';renderReports()}
+function closeReports(){document.getElementById('reportsModal').style.display='none'}
+function reportData(){
+ const period=document.getElementById('reportPeriod')?.value||'month';
+ if(typeof financialRecords==='undefined')return [];
+ if(period==='all')return financialRecords;
+ const now=new Date('2026-10-05T12:00:00'), start=new Date(now);
+ if(period==='week')start.setDate(now.getDate()-6);else start.setDate(1);
+ return financialRecords.filter(r=>new Date(r.iso+'T12:00:00')>=start&&new Date(r.iso+'T12:00:00')<=now);
+}
+function renderReports(){
+ const rows=reportData(), total=rows.reduce((s,r)=>s+r.value,0);
+ document.getElementById('repRevenue').textContent=brl(total);
+ document.getElementById('repCount').textContent=rows.length;
+ document.getElementById('repTicket').textContent=brl(rows.length?total/rows.length:0);
+ const sums={};rows.forEach(r=>sums[r.service]=(sums[r.service]||0)+r.value);
+ const sorted=Object.entries(sums).sort((a,b)=>b[1]-a[1]), max=sorted[0]?.[1]||1;
+ document.getElementById('repLeader').textContent=sorted[0]?.[0]||'—';
+ document.getElementById('reportProcedures').innerHTML=sorted.map(x=>`<div class="report-row"><span>${x[0]}</span><div class="report-track"><span style="width:${x[1]/max*100}%"></span></div><b class="gold">${brl(x[1])}</b></div>`).join('')||'<span class="full-muted">Sem dados.</span>';
+ document.getElementById('reportRows').innerHTML=rows.map(r=>`<tr><td>${r.date}</td><td>${r.client}</td><td>${r.service}</td><td class="gold">${brl(r.value)}</td></tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--muted)">Sem dados.</td></tr>';
+}
+document.getElementById('reportsModal').addEventListener('click',e=>{if(e.target.id==='reportsModal')closeReports()});
+(function(){
+ function bindReports(){
+  document.querySelectorAll('button').forEach(btn=>{
+   if((btn.textContent||'').toLowerCase().includes('relatório')){
+    btn.onclick=e=>{e.preventDefault();openReports()};
+   }
+  });
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindReports);else bindReports();
+})();
+</script>
+
+<!-- GABI LASH • Supabase Integration -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+window.GABI_SUPABASE_CONFIG = {
+  url: "COLE_AQUI_SUA_NEXT_PUBLIC_SUPABASE_URL",
+  key: "COLE_AQUI_SUA_NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
+};
+
+window.gabiSupabase = null;
+window.gabiSupabaseConnected = false;
+
+(function(){
+  const c = window.GABI_SUPABASE_CONFIG;
+  if (!c.url.includes("COLE_AQUI") && !c.key.includes("COLE_AQUI") &&
+      window.supabase && window.supabase.createClient) {
+    window.gabiSupabase = window.supabase.createClient(c.url, c.key);
+    window.gabiSupabaseConnected = true;
+  }
+})();
+
+async function gabiLoadServicesFromSupabase(){
+  if (!window.gabiSupabaseConnected) return null;
+  const {data: salons, error: se} = await window.gabiSupabase
+    .from("salons").select("id,name").eq("name","GABI LASH").limit(1);
+  if (se || !salons?.length) return null;
+  window.GABI_SALON_ID = salons[0].id;
+
+  const {data, error} = await window.gabiSupabase
+    .from("services").select("id,name,price,duration_minutes,active")
+    .eq("salon_id", window.GABI_SALON_ID).eq("active", true).order("price");
+  if (error) return null;
+
+  window.gabiRealServices = (data || []).map(s => ({
+    id:s.id, name:s.name, price:Number(s.price), duration:Number(s.duration_minutes)
+  }));
+  return window.gabiRealServices;
+}
+
+async function gabiSaveAppointmentToSupabase({name,phone,serviceName,date,time}){
+  if (!window.gabiSupabaseConnected) return {ok:false,message:"Supabase não configurado."};
+  if (!window.GABI_SALON_ID) await gabiLoadServicesFromSupabase();
+  const salonId=window.GABI_SALON_ID;
+  if (!salonId) return {ok:false,message:"GABI LASH não encontrada."};
+
+  const {data:service,error:svcErr}=await window.gabiSupabase
+    .from("services").select("id,price").eq("salon_id",salonId)
+    .eq("name",serviceName).eq("active",true).single();
+  if (svcErr || !service) return {ok:false,message:"Serviço não encontrado."};
+
+  let {data:client}=await window.gabiSupabase.from("clients")
+    .select("id").eq("salon_id",salonId).eq("phone",phone)
+    .limit(1).maybeSingle();
+
+  if (!client){
+    const r=await window.gabiSupabase.from("clients")
+      .insert({salon_id:salonId,name,phone}).select("id").single();
+    if(r.error) return {ok:false,message:r.error.message};
+    client=r.data;
+  } else {
+    await window.gabiSupabase.from("clients").update({name}).eq("id",client.id);
+  }
+
+  const startsAt=new Date(`${date}T${time}:00`);
+  const {data:conflict}=await window.gabiSupabase.from("appointments")
+    .select("id").eq("salon_id",salonId).eq("starts_at",startsAt.toISOString())
+    .neq("status","cancelled").limit(1);
+  if(conflict?.length) return {ok:false,message:"Esse horário já está ocupado."};
+
+  const {data,error}=await window.gabiSupabase.from("appointments").insert({
+    salon_id:salonId,client_id:client.id,service_id:service.id,
+    starts_at:startsAt.toISOString(),status:"confirmed",price:Number(service.price)
+  }).select("*").single();
+
+  if(error) return {ok:false,message:error.message};
+  return {ok:true,appointment:data};
+}
+
+window.addEventListener("load",()=>{
+  const b=document.createElement("div");
+  b.style.cssText="position:fixed;bottom:14px;right:14px;z-index:99999;padding:7px 11px;border-radius:999px;background:#171717;color:#d6b56a;font:600 11px Arial;box-shadow:0 4px 16px rgba(0,0,0,.35)";
+  b.textContent=window.gabiSupabaseConnected?"● BANCO CONECTADO":"○ COLE AS CHAVES DO SUPABASE";
+  document.body.appendChild(b);
+});
+</script>
+
+</body>
+</html>
