@@ -162,7 +162,7 @@ h2{font-size:29px;margin:0 0 5px}.sub{color:var(--muted);margin:0 0 22px}
   </nav>
 </aside>
 <main class="main">
-  <div class="top"><div class="search">⌕ &nbsp; Buscar cliente, agendamento...</div><div class="profile"><div>🔔</div><div class="avatar">G</div><div><b>Gabi Lash</b><br><small style="color:var(--muted)">Proprietária</small></div></div></div>
+  <div class="top"><div class="search">⌕ &nbsp; Buscar cliente, agendamento...</div><div class="profile"><div>🔔</div><div class="avatar">G</div><div><b>Gabi Lash</b><br><small style="color:var(--muted)">Proprietária</small></div><button type="button" id="gabiLogoutBtn" onclick="gabiLogout()" style="margin-left:12px;padding:9px 14px;border:1px solid #6b542c;border-radius:20px;background:#17140e;color:#f0d28b;font-weight:600;cursor:pointer">Sair ↗</button></div></div>
   <h2>Olá, seja bem-vinda!</h2><p class="sub">Aqui está o resumo do seu dia.</p>
   <section class="cards">
     <div class="card"><div class="label">Faturamento hoje</div><div class="value">R$ 450,00</div><div class="up">↑ 12% vs. ontem</div></div>
@@ -1021,6 +1021,33 @@ window.gabiAuthReady = false;
     window.gabiSupabaseConnected = true;
   }
 })();
+
+async function gabiLogout(){
+  const btn=document.getElementById('gabiLogoutBtn');
+  if(btn){btn.disabled=true;btn.textContent='Saindo...';}
+  if(!window.gabiSupabase){
+    const login=document.getElementById('supabaseLogin');
+    if(login) login.style.display='flex';
+    if(btn){btn.disabled=false;btn.textContent='Sair ↗';}
+    return;
+  }
+  const {error}=await window.gabiSupabase.auth.signOut();
+  if(error){
+    alert('Não foi possível sair agora: '+error.message);
+    if(btn){btn.disabled=false;btn.textContent='Sair ↗';}
+    return;
+  }
+  const login=document.getElementById('supabaseLogin');
+  const status=document.getElementById('loginStatus');
+  if(status) status.textContent='';
+  const email=document.getElementById('loginEmail');
+  const password=document.getElementById('loginPassword');
+  if(email) email.value='';
+  if(password) password.value='';
+  if(login) login.style.display='flex';
+  window.gabiAuthReady=false;
+  if(btn){btn.disabled=false;btn.textContent='Sair ↗';}
+}
 
 async function gabiInitAuth(){
   if(!window.gabiSupabaseConnected) return;
